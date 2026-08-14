@@ -116,7 +116,6 @@ export class AuthHandler {
     }
 
     const idcMethod = new IdcAuthMethod(this.config, this.repository, this.accountManager)
-    const tokenMethod = new TokenAuthMethod(this.repository, this.accountManager)
     const menuMethod = new AccountMenuMethod(
       this.config,
       this.repository,
@@ -132,18 +131,6 @@ export class AuthHandler {
         label: 'Manage accounts (list · quotas · delete)',
         type: 'oauth' as const,
         authorize: (inputs?: any) => menuMethod.authorize(inputs)
-      },
-      {
-        label: 'Google / GitHub (via Refresh Token)',
-        type: 'oauth' as const,
-        prompts: [
-          {
-            type: 'text' as const,
-            key: 'refresh_token',
-            message: 'Paste your Kiro Refresh Token'
-          }
-        ],
-        authorize: (inputs?: any) => tokenMethod.authorize(inputs)
       },
       {
         label: 'AWS Builder ID / IAM Identity Center',

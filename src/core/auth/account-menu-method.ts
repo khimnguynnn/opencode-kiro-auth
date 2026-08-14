@@ -15,7 +15,6 @@ const noopToast = () => {}
 
 type MenuChoice =
   | { type: 'cancel' }
-  | { type: 'add-token' }
   | { type: 'check' }
   | { type: 'delete-all' }
   | { type: 'account'; account: ManagedAccount }
