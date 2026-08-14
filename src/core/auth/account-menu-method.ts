@@ -16,6 +16,7 @@ const noopToast = () => {}
 type MenuChoice =
   | { type: 'cancel' }
   | { type: 'check' }
+  | { type: 'cloud-sync' }
   | { type: 'delete-all' }
   | { type: 'account'; account: ManagedAccount }
 
@@ -93,6 +94,11 @@ export class AccountMenuMethod {
         continue
       }
 
+      if (choice.type === 'cloud-sync') {
+        await this.cloudSyncFlow()
+        continue
+      }
+
       if (choice.type === 'delete-all') {
         const ok = await confirm('Delete ALL accounts? This cannot be undone.')
         if (!ok) continue
@@ -112,6 +118,14 @@ export class AccountMenuMethod {
       { label: 'Actions', value: { type: 'cancel' }, kind: 'heading' },
       { label: 'Check quotas (refresh all)', value: { type: 'check' }, color: 'cyan' }
     ]
+
+    if (this.config.cloud_sync?.token) {
+      items.push({
+        label: 'Cloud Sync (Pull & Push)',
+        value: { type: 'cloud-sync' },
+        color: 'cyan'
+      })
+    }
 
     if (accounts.length > 0) {
       items.push({ label: '', value: { type: 'cancel' }, separator: true })
@@ -195,6 +209,41 @@ export class AccountMenuMethod {
         const msg = e instanceof Error ? e.message : String(e)
         out.write(`${ANSI.red}error: ${msg.slice(0, 100)}${ANSI.reset}\n`)
       }
+    }
+
+    out.write(`\n  ${ANSI.dim}Press any key to return to the menu...${ANSI.reset}`)
+    await this.waitForKey()
+  }
+
+  private async cloudSyncFlow(): Promise<void> {
+    const out = process.stdout
+    out.write(ANSI.clearScreen + ANSI.moveTo(1, 1))
+    out.write(`${ANSI.bold}Cloud Sync (GitHub Gist)${ANSI.reset}\n\n`)
+
+    const cs = this.config.cloud_sync
+    if (!cs?.token) {
+      out.write(
+        `${ANSI.yellow}Not configured. Set cloud_sync.token (a GitHub PAT with the ` +
+          `'gist' scope) in ~/.config/opencode/kiro.json.${ANSI.reset}\n`
+      )
+      out.write(`\n  ${ANSI.dim}Press any key to return...${ANSI.reset}`)
+      await this.waitForKey()
+      return
+    }
+
+    out.write('  Pulling remote pool and pushing local changes...\n\n')
+    try {
+      const { syncCloud } = await import('../../plugin/sync/cloud-sync.js')
+      const result = await syncCloud(this.config, this.repository, this.accountManager)
+      out.write(
+        `  ${ANSI.green}Done.${ANSI.reset} Added ${result.pulled} new, updated ${result.merged}, ` +
+          `pushed ${result.pushed} to cloud.\n`
+      )
+      if (result.gistId) out.write(`  ${ANSI.dim}Gist: ${result.gistId}${ANSI.reset}\n`)
+      for (const e of result.errors) out.write(`  ${ANSI.red}${e}${ANSI.reset}\n`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      out.write(`  ${ANSI.red}Sync failed: ${msg.slice(0, 150)}${ANSI.reset}\n`)
     }
 
     out.write(`\n  ${ANSI.dim}Press any key to return to the menu...${ANSI.reset}`)
