@@ -140,7 +140,7 @@ export class AuthHandler {
           {
             type: 'text' as const,
             key: 'refresh_token',
-            message: 'Paste your Kiro Refresh Token (from kiro-cli config or kiro-gateway)'
+            message: 'Paste your Kiro Refresh Token'
           }
         ],
         authorize: (inputs?: any) => tokenMethod.authorize(inputs)

@@ -63,14 +63,9 @@ export async function fetchUsageLimits(auth: KiroAuthDetails): Promise<any> {
         limitCount = 0
       if (Array.isArray(data.usageBreakdownList)) {
         for (const s of data.usageBreakdownList) {
-          // Kiro reports a rounded integer (currentUsage) plus the exact value
-          // (currentUsageWithPrecision) — the latter is what the Kiro dashboard
-          // shows (e.g. 70.45 credits). Prefer it; fall back to the integer.
-          if (s.freeTrialInfo) {
-            usedCount +=
-              s.freeTrialInfo.currentUsageWithPrecision ?? s.freeTrialInfo.currentUsage ?? 0
-            limitCount += s.freeTrialInfo.usageLimitWithPrecision ?? s.freeTrialInfo.usageLimit ?? 0
-          }
+          // We intentionally ignore `s.freeTrialInfo` here so that the UI
+          // displays the true monthly recurring quota (e.g. 50) rather than
+          // adding the 500 one-time welcome bonus.
           usedCount += s.currentUsageWithPrecision ?? s.currentUsage ?? 0
           limitCount += s.usageLimitWithPrecision ?? s.usageLimit ?? 0
         }
