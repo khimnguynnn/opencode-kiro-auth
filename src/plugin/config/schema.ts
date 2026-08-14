@@ -52,6 +52,14 @@ export const RegionSchema = z.enum([
 ])
 export type Region = z.infer<typeof RegionSchema>
 
+export const CloudSyncSchema = z.object({
+  enabled: z.boolean().default(false),
+  provider: z.literal('github_gist').default('github_gist'),
+  token: z.string().optional(),
+  gist_id: z.string().optional()
+})
+export type CloudSyncConfig = z.infer<typeof CloudSyncSchema>
+
 export const KiroConfigSchema = z.object({
   $schema: z.string().optional(),
 
@@ -102,7 +110,9 @@ export const KiroConfigSchema = z.object({
   // structured results. Requires a Pro account (profileArn); on free Builder ID
   // accounts the tool is not registered. Disable to avoid overlap with other
   // search tools/MCP servers.
-  web_search_enabled: z.boolean().default(true)
+  web_search_enabled: z.boolean().default(true),
+
+  cloud_sync: CloudSyncSchema.optional()
 })
 
 export type KiroConfig = z.infer<typeof KiroConfigSchema>

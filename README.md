@@ -141,12 +141,35 @@ delete)** to open an interactive menu:
 
 - **Check quotas (refresh all)** — refreshes each account's token if needed and fetches
   live usage, printing `used/limit (%)` per account.
+- **Cloud Sync (Pull & Push)** — only shown when `cloud_sync.token` is set; syncs the
+  account pool with a private GitHub Gist (see below).
 - **Per-account actions** — select an account to view its status/usage/region and delete
   it.
 - **Delete all accounts** — clears every stored account (asks for confirmation).
 
 The menu requires an interactive terminal. In non-interactive contexts (SSH pipes, CI) it
 falls back to the plain add-account flow.
+
+### Cloud Sync (multi-device account pool)
+
+Share one account pool across machines via a **private GitHub Gist**. Add to
+`~/.config/opencode/kiro.json`:
+
+```jsonc
+"cloud_sync": {
+  "enabled": true,
+  "provider": "github_gist",
+  "token": "ghp_xxx",   // GitHub PAT with the `gist` scope
+  "gist_id": ""         // leave blank — created and filled in on first push
+}
+```
+
+- Only the **refresh token** and usage counters are synced — never the short-lived access
+  token. Pulled accounts refresh their own access token on first use.
+- Merge is conflict-safe: shared accounts take `max(usedCount)` so no device under-counts a
+  burned quota, and a dead account on any device is marked dead everywhere.
+- When `enabled`, the plugin pulls the pool in the background on startup. Use the **Cloud
+  Sync (Pull & Push)** menu item to force a two-way sync on demand.
 
 ## Local plugin development
 
@@ -264,6 +287,10 @@ Edit `~/.config/opencode/kiro.json`:
 - `enable_log_api_request`: Enable detailed API request logging. Request logs
   include the resolved `additionalModelRequestFields`, so this is how you confirm
   which effort level actually went out on the wire.
+- `cloud_sync`: Sync the account pool across devices via a private GitHub Gist.
+  Object with `enabled` (background pull on startup), `provider` (`github_gist`),
+  `token` (GitHub PAT with `gist` scope), and `gist_id` (auto-filled on first push).
+  See [Cloud Sync](#cloud-sync-multi-device-account-pool).
 
 ## Storage
 

@@ -185,6 +185,18 @@ export function loadConfig(directory: string): KiroConfig {
   return config
 }
 
+export function saveGistId(gistId: string): void {
+  const path = getUserConfigPath()
+  try {
+    const raw = existsSync(path) ? JSON.parse(readFileSync(path, 'utf-8')) : {}
+    raw.cloud_sync = { ...(raw.cloud_sync || {}), gist_id: gistId }
+    writeFileSync(path, JSON.stringify(raw, null, 2), 'utf-8')
+    logger.log(`Persisted cloud_sync.gist_id to ${path}`)
+  } catch (error) {
+    logger.warn(`Failed to persist gist_id: ${String(error)}`)
+  }
+}
+
 export function configExists(path: string): boolean {
   return existsSync(path)
 }

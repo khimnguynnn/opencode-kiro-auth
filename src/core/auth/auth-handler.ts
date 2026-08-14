@@ -6,7 +6,6 @@ import { summarizeUsage } from '../../plugin/usage.js'
 import { UsageTracker } from '../account/usage-tracker.js'
 import { AccountMenuMethod } from './account-menu-method.js'
 import { IdcAuthMethod } from './idc-auth-method.js'
-import { TokenAuthMethod } from './token-auth-method.js'
 import { TokenRefresher } from './token-refresher.js'
 
 type ToastFunction = (message: string, variant: 'info' | 'warning' | 'success' | 'error') => void
@@ -33,6 +32,23 @@ export class AuthHandler {
         for (const a of accounts) this.accountManager.addAccount(a)
       }
       logger.log('Kiro CLI sync: done', { importedAccounts: accounts.length })
+    }
+
+    if (this.accountManager && this.config.cloud_sync?.enabled && this.config.cloud_sync?.token) {
+      void (async () => {
+        try {
+          const { pullFromCloud } = await import('../../plugin/sync/cloud-sync.js')
+          const r = await pullFromCloud(this.config, this.accountManager)
+          if (r.pulled || r.merged) {
+            this.repository.invalidateCache()
+            logger.log('Cloud sync pull (startup)', r)
+          }
+        } catch (e) {
+          logger.warn('Cloud sync pull failed', {
+            error: e instanceof Error ? e.message : String(e)
+          })
+        }
+      })()
     }
 
     // Refresh usage before the summary toast: the persisted value is stale after
