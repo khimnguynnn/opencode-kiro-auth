@@ -139,6 +139,9 @@ setting is a global override for all supported models, not a per-model setting.
 Run `opencode auth login`, select `kiro`, then choose **Manage accounts (list · quotas ·
 delete)** to open an interactive menu:
 
+- **Add account via Refresh Token** — securely add a Kiro Desktop (Google/GitHub) account
+  by pasting its refresh token. The plugin verifies the token, pulls usage, and adds it
+  to the rotation pool natively without relying on a persistent `kiro-cli` session.
 - **Check quotas (refresh all)** — refreshes each account's token if needed and fetches
   live usage, printing `used/limit (%)` per account.
 - **Per-account actions** — select an account to view its status/usage/region and delete
