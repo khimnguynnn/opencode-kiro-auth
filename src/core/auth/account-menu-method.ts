@@ -111,7 +111,6 @@ export class AccountMenuMethod {
   private buildItems(accounts: ManagedAccount[]): SelectItem<MenuChoice>[] {
     const items: SelectItem<MenuChoice>[] = [
       { label: 'Actions', value: { type: 'cancel' }, kind: 'heading' },
-      { label: 'Add account via Refresh Token', value: { type: 'add-token' }, color: 'cyan' },
       { label: 'Check quotas (refresh all)', value: { type: 'check' }, color: 'cyan' }
     ]
 

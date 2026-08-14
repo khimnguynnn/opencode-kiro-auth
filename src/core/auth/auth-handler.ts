@@ -135,7 +135,7 @@ export class AuthHandler {
       },
       {
         label: 'Google / GitHub (via Refresh Token)',
-        type: 'api' as const,
+        type: 'oauth' as const,
         prompts: [
           {
             type: 'text' as const,

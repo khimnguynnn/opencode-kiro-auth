@@ -1,6 +1,6 @@
+import type { AuthOAuthResult } from '@opencode-ai/plugin'
 import type { AccountRepository } from '../../infrastructure/database/account-repository.js'
 import { createDeterministicAccountId } from '../../plugin/accounts.js'
-import * as logger from '../../plugin/logger.js'
 import { refreshAccessToken } from '../../plugin/token.js'
 import type { ManagedAccount } from '../../plugin/types.js'
 import { fetchUsageLimits } from '../../plugin/usage.js'
@@ -11,13 +11,15 @@ export class TokenAuthMethod {
     private accountManager: any
   ) {}
 
-  async authorize(
-    inputs?: Record<string, string>
-  ): Promise<{ type: 'success'; key: string } | { type: 'failed' }> {
+  async authorize(inputs?: Record<string, string>): Promise<AuthOAuthResult> {
     const rawToken = inputs?.refresh_token?.trim()
     if (!rawToken) {
-      logger.error('No refresh token provided')
-      return { type: 'failed' }
+      return {
+        url: '',
+        instructions: 'No refresh token provided.',
+        method: 'auto',
+        callback: async () => ({ type: 'failed' })
+      }
     }
 
     try {
@@ -55,11 +57,19 @@ export class TokenAuthMethod {
       await this.repository.save(acc)
       this.accountManager?.addAccount?.(acc)
 
-      logger.log(`Successfully added account via refresh token: ${email}`)
-      return { type: 'success', key: freshAuth.access }
+      return {
+        url: '',
+        instructions: `Success! Added account: ${email}`,
+        method: 'auto',
+        callback: async () => ({ type: 'success', key: 'kiro-managed' })
+      }
     } catch (e: any) {
-      logger.error('Token verification failed', { error: e.message })
-      return { type: 'failed' }
+      return {
+        url: '',
+        instructions: `Failed to add account: ${e.message}`,
+        method: 'auto',
+        callback: async () => ({ type: 'failed' })
+      }
     }
   }
 }
