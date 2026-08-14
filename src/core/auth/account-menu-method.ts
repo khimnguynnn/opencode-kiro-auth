@@ -94,11 +94,6 @@ export class AccountMenuMethod {
         continue
       }
 
-      if (choice.type === 'add-token') {
-        await this.addTokenFlow()
-        continue
-      }
-
       if (choice.type === 'delete-all') {
         const ok = await confirm('Delete ALL accounts? This cannot be undone.')
         if (!ok) continue
@@ -205,91 +200,6 @@ export class AccountMenuMethod {
     }
 
     out.write(`\n  ${ANSI.dim}Press any key to return to the menu...${ANSI.reset}`)
-    await this.waitForKey()
-  }
-
-  private async addTokenFlow(): Promise<void> {
-    const { stdin, stdout } = process
-    const wasRaw = stdin.isRaw ?? false
-    if (wasRaw) {
-      try {
-        stdin.setRawMode(false)
-      } catch {}
-    }
-
-    const readline = await import('node:readline/promises')
-    const rl = readline.createInterface({ input: stdin, output: stdout })
-
-    stdout.write(ANSI.clearScreen + ANSI.moveTo(1, 1))
-    stdout.write(`${ANSI.bold}Add Account via Refresh Token${ANSI.reset}\n\n`)
-    stdout.write(
-      `  Supported for Kiro Desktop accounts (Google/GitHub/Apple).\n` +
-        `  Paste the raw refresh token string.\n\n`
-    )
-
-    const token = await rl.question(
-      `  ${ANSI.cyan}?${ANSI.reset} Refresh Token (leave empty to cancel): `
-    )
-    rl.close()
-
-    if (wasRaw) {
-      try {
-        stdin.setRawMode(true)
-      } catch {}
-    }
-
-    const trimmedToken = token.trim()
-    if (!trimmedToken) {
-      return
-    }
-
-    stdout.write(`\n  Verifying token... `)
-
-    try {
-      const { refreshAccessToken } = await import('../../plugin/token.js')
-      const { fetchUsageLimits } = await import('../../plugin/usage.js')
-      const { createDeterministicAccountId } = await import('../../plugin/accounts.js')
-
-      const finalToken = trimmedToken.includes('|') ? trimmedToken : `${trimmedToken}|desktop`
-
-      const dummyAuth = {
-        refresh: finalToken,
-        access: '',
-        expires: 0,
-        authMethod: 'desktop' as const,
-        region: 'us-east-1' as const
-      }
-
-      const freshAuth = await refreshAccessToken(dummyAuth as any)
-      const usage = await fetchUsageLimits(freshAuth as any)
-
-      const email = usage.email || `token-import-${Date.now().toString().slice(-6)}@kiro.local`
-      const id = createDeterministicAccountId(email, 'desktop')
-
-      const acc: ManagedAccount = {
-        id,
-        email,
-        authMethod: 'desktop',
-        region: 'us-east-1',
-        refreshToken: freshAuth.refresh,
-        accessToken: freshAuth.access,
-        expiresAt: freshAuth.expires,
-        rateLimitResetTime: 0,
-        isHealthy: true,
-        failCount: 0,
-        usedCount: usage.usedCount,
-        limitCount: usage.limitCount
-      }
-
-      await this.repository.save(acc)
-      this.accountManager?.addAccount?.(acc)
-
-      stdout.write(`${ANSI.green}Success! Added ${email}${ANSI.reset}\n`)
-    } catch (e: any) {
-      stdout.write(`${ANSI.red}Failed: ${e.message}${ANSI.reset}\n`)
-    }
-
-    stdout.write(`\n  ${ANSI.dim}Press any key to return to the menu...${ANSI.reset}`)
     await this.waitForKey()
   }
 

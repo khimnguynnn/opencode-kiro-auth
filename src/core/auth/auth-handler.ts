@@ -6,6 +6,7 @@ import { summarizeUsage } from '../../plugin/usage.js'
 import { UsageTracker } from '../account/usage-tracker.js'
 import { AccountMenuMethod } from './account-menu-method.js'
 import { IdcAuthMethod } from './idc-auth-method.js'
+import { TokenAuthMethod } from './token-auth-method.js'
 import { TokenRefresher } from './token-refresher.js'
 
 type ToastFunction = (message: string, variant: 'info' | 'warning' | 'success' | 'error') => void
@@ -115,6 +116,7 @@ export class AuthHandler {
     }
 
     const idcMethod = new IdcAuthMethod(this.config, this.repository, this.accountManager)
+    const tokenMethod = new TokenAuthMethod(this.repository, this.accountManager)
     const menuMethod = new AccountMenuMethod(
       this.config,
       this.repository,
@@ -130,6 +132,18 @@ export class AuthHandler {
         label: 'Manage accounts (list · quotas · delete)',
         type: 'oauth' as const,
         authorize: (inputs?: any) => menuMethod.authorize(inputs)
+      },
+      {
+        label: 'Google / GitHub (via Refresh Token)',
+        type: 'api' as const,
+        prompts: [
+          {
+            type: 'text' as const,
+            key: 'refresh_token',
+            message: 'Paste your Kiro Refresh Token (from kiro-cli config or kiro-gateway)'
+          }
+        ],
+        authorize: (inputs?: any) => tokenMethod.authorize(inputs)
       },
       {
         label: 'AWS Builder ID / IAM Identity Center',
